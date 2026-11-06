@@ -8,14 +8,13 @@ then fetch this unit with `repo add mio` or via the project starter list.
 
 ## License
 
-This repository is dedicated to the public domain under the Unlicense
-(see `LICENSE`).
+The original files are offered under `Apache-2.0 OR GPL-2.0-or-later`;
+you choose either license. See `LICENSE` and `LICENSES/`.
 
-Individual source files may still carry historical
-`SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later` headers from
-prior versions. Those headers have **not** been mass-rewritten: treat
-them as pending commit-by-commit review.
+Copyright notices are retained. Third-party-derived files keep their own
+licenses; `atomic_32.h` is `GPL-2.0-only`. See the individual SPDX
+identifiers and source headers.
 
 ## Version
 
-Local tag `v0.1.0` (not published to GitHub in this step).
+Version tag: `v0.1.0`.
