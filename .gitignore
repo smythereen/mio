@@ -1,0 +1,9 @@
+*.o
+*.a
+*.so
+*.d
+.depend
+*.tmp
+*.log
+.old/
+*.save

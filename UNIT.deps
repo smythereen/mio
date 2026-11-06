@@ -1,0 +1,6 @@
+# UNIT.deps for mio
+# Evidence: mem_in/out use now; stamp_l is mio Mitem table for stamp_t.
+# LIBRARIES empty; dependents supply -lnow at link.
+base 1
+require now
+require sys
