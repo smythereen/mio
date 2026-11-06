@@ -1,6 +1,6 @@
 # mio — memory item I/O (mem_io)
 
-`mio` lets a program read and write the fields of a C structure **by name,
+`mio` lets a program read and write the fields of a C or standard-layout C++ structure **by name,
 as text**. You describe the structure once with a table of `Mitem` entries
 (field name, type, offset, size, array length, description, format). mio can
 then print every field, print one field, print CSV, or parse a text value and
@@ -19,11 +19,11 @@ messaging.
 ## Public interface (`mem_io.h`)
 
 - **Describing a struct:** `#define STRUCT my_t`, then build
-  `Mitem my_l[] = { ..., { END_OF_LIST } };` with macros such as `Ulong`, `Long`,
+  `Mitem my_l[] = { ..., { END_OF_LIST } };` with macros such as `U32`, `Long`,
   `Huge`, `S32`, `U32`, `F32`, `Double`, `String`, `Stamp`, `Stamp32`, `Date`,
   `IP_Addr`, `IP_Port`, bit/mask macros (`Mchar`, `Mlong`, `BitChar`, … with a
   `mask_t` list) and nested `STRUCTURE` entries. The `_` variants
-  (`Ulong_(flags, …)`) take `Mflg_t` flags: `INPUT_ONLY`, `DISPLAY_ONLY`,
+  (`U32_(flags, …)`) take `Mflg_t` flags: `INPUT_ONLY`, `DISPLAY_ONLY`,
   `NO_ARRAY_DISPLAY`, `BIT_BASED`.
 - **Output:** `Output_Memory_Item(mem, list, name_or_0, prefix)` prints one field,
   or all fields when `name` is 0. `Output_Memory_CSV(...)` prints CSV
@@ -58,8 +58,8 @@ From `tpi/tpi_l.c` and `tpi/tpimem.c` in the public `tpi` unit:
 ```c
 #define STRUCT tpi_t
 Mitem tpi_l[] = {
-    Ulong(  Interval, "Interval In Seconds (0=No Interval)" ),
-    Ulong(  Count,    "Current Count"                       ),
+    U32(  Interval, "Interval In Seconds (0=No Interval)" ),
+    U32(  Count,    "Current Count"                       ),
     Stamp(  Stamp,    "Start Of Next Hour"                  ),
     String( File,     "Hourly Data [ Path & ] File"         ),
     { END_OF_LIST }
@@ -94,6 +94,62 @@ sys atomic far map sem now mio tp tpi
 ```
 
 Or add this unit on its own with `repo add <unit>`.
+
+## Using this unit from C++
+
+This unit can be used from **C and C++**. Keep the unit's `.c` implementation
+files compiled as C with `gcc`/`CC`; compile your C++ client with `g++`/`CXX`
+and use `g++` for the final mixed-language link. There is no need to rebuild
+the C library as C++.
+
+Base's shared rules recognize C++ product sources named `.cc` and compile
+them with `CXX` and `CXXFLAGS` (for example `make CXX=g++`). `CPP` names
+the preprocessor, not the C++ compiler. The commands below assume the
+headers and libraries have already been installed into `$HOME/cmn` and
+`$HOME/lib`. GNU C++17 on Linux x86-64 is the example target; GNU extensions
+in the shared types/headers are intentional.
+
+`mem_io.h` and its nested `common.h` already provide `extern "C"` guards.
+`Mitem` is an anonymous-struct typedef: use `Mitem`, not `struct Mitem`.
+Describe standard-layout data, not arbitrary C++ class internals. The table
+below uses mutable name/description arrays because the ABI stores `char *`.
+Legacy descriptor macros stringify field names into `char *` members; base
+uses `-Wno-write-strings` for those older initializers. Explicit entries like
+this example avoid that conversion in client code. Include `<now.h>` before
+`<mem_io.h>` if you need the `Now`/`NowSecs` descriptor macros.
+
+The numeric implementation uses quadmath for the current x86-64 `f128`
+build; the explicit link below includes `-lquadmath -lm` after the archives.
+
+Save as `use_mio.cc`:
+
+```cpp
+#include <stddef.h>
+#include <mem_io.h>
+struct Sample { u32 count; };
+int main() {
+    Sample data{};
+    char name[] = "count", description[] = "Transaction count", text[] = "42";
+    Mitem items[] = {
+        {UNSIGNED, 0, offsetof(Sample, count), sizeof(u32), 1,
+         name, description, nullptr, nullptr},
+        {END_OF_LIST}
+    };
+    Input_Memory_Item(&data, items, name, text);
+    return data.count == 42 ? 0 : 1;
+}
+```
+
+```sh
+g++ -std=gnu++17 -I"$HOME/cmn" use_mio.cc -L"$HOME/lib" -lmio -lnow -lquadmath -lm -o use_mio
+./use_mio
+```
+
+The C++ example above was compiled, linked and run on Linux x86-64 using
+Clang 22.1.8 via `zig c++ -std=gnu++17 -nostdlib++`, with GCC 14.2-built C
+objects where needed. It uses no C++ standard-library runtime. The `g++`
+command is the GNU-toolchain form; that driver was not available for this
+smoke check. This is not an exhaustive API or concurrency test.
 
 ## License
 
