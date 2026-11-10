@@ -8,6 +8,8 @@ store it into a named field. It is used for shared-memory and memory-mapped
 status structures, so an operator can inspect or patch a live structure from
 the shell without a purpose-built tool.
 
+It builds with the [base](https://github.com/smythereen/base) unit make system, which handles C, C++, and Rust, including large mixed-language projects.
+
 ## Role in the architecture
 
 mio is the generic "view and edit a struct" layer. Units that keep counters or
